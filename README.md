@@ -49,7 +49,14 @@ An automated content creation pipeline that generates high-quality articles usin
    WP_APP_PASSWORD=your_app_password_here
    ```
 
-### 2. Running the Application
+### 3. Dependencies
+
+Run the following command to install all the dependencies
+   ```
+   pip install -r requirements.txt
+   ```
+
+### 3. Running the Application
 
 **Web Interface (Recommended):**
 ```bash
@@ -66,7 +73,7 @@ python main.py
 python main_sync.py
 ```
 
-### 3. Usage Options
+### 4. Usage Options
 
 **Single Article Generation:**
 - Use the web interface to generate individual articles
@@ -154,17 +161,6 @@ async def generate_article_image(title: str, content_summary: str):
 - **Content Scheduling** - Schedule WordPress publications
 - **API Integration** - RESTful API for external integrations
 - **Content Quality Scoring** - AI-powered content quality assessment
-
-## Dependencies
-
-```
-flask>=2.3.0
-pandas>=2.0.0
-google-generativeai>=0.3.0
-requests>=2.31.0
-werkzeug>=2.3.0
-openpyxl>=3.1.0
-```
 
 ## Contributing
 
