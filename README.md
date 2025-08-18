@@ -1,5 +1,5 @@
 
-# AI Content Generation System
+# ContentForgeAI
 
 An automated content creation pipeline that generates high-quality articles using Google Gemini AI with WordPress publishing capabilities.
 
