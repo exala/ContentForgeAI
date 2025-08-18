@@ -112,7 +112,7 @@ def upload_image_to_wordpress(image_path: str, article_title: str) -> int | None
         image_path: The absolute local path to the image file.
         article_title: The title of the article, used for image alt text.
     """
-    image_path = "D:\Ghazanfer Projects\2025\Modexis\font.PNG"
+    image_path = "" # Enter the path to your image here
     print(os.path.exists(image_path))
     if not image_path or not os.path.exists(image_path):
         print("   [WP] Image path not provided or file does not exist. Skipping image upload.")
@@ -131,7 +131,7 @@ def upload_image_to_wordpress(image_path: str, article_title: str) -> int | None
         file_headers['Content-Type'] = 'image/png' # Or jpeg, etc.
 
         print(f"   [WP] Uploading {filename} to WordPress Media Library...")
-        response = requests.post(media_url, headers=file_headers, data=image_data, timeout=60)
+        response = requests.post(media_url, headers=file_headers, data=image_data, timeout=60, verify=False)
         response.raise_for_status() # Raise an exception for bad status codes
 
         media_id = response.json()['id']
