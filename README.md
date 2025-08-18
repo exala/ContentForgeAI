@@ -23,6 +23,7 @@ An automated content creation pipeline that generates high-quality articles usin
 ├── templates/
 │   └── index.html         # Web interface template
 ├── uploads/               # File upload directory
+├── .env-copy             # Environment variables template
 ├── demo_app.py           # Flask web application
 ├── main.py               # Async batch processing script
 ├── main_sync.py          # Synchronous batch processing script
@@ -34,10 +35,19 @@ An automated content creation pipeline that generates high-quality articles usin
 
 ### 1. Environment Setup
 
-Set your Google API key:
-```bash
-export GOOGLE_API_KEY="your_gemini_api_key_here"
-```
+1. Copy the environment template file:
+   ```bash
+   cp .env-copy .env
+   ```
+
+2. Edit the `.env` file and add your credentials:
+   ```
+   GOOGLE_API_KEY=your_gemini_api_key_here
+   MODEL_NAME=gemini-2.0-flash-lite
+   WP_URL=https://yoursite.com
+   WP_USER=admin
+   WP_APP_PASSWORD=your_app_password_here
+   ```
 
 ### 2. Running the Application
 
@@ -69,14 +79,6 @@ python main_sync.py
 - Process multiple articles automatically
 
 ## Configuration
-
-### WordPress Setup
-Edit `modules/wordpress_publisher.py`:
-```python
-WP_URL = "https://yoursite.com"
-WP_USER = "your_username"
-WP_APP_PASSWORD = "your_app_password"
-```
 
 ### Content Settings
 Modify `modules/generation.py` to adjust:
