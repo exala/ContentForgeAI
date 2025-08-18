@@ -1,0 +1,291 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Content Generator Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .demo-section { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; }
+        input[type="text"], input[type="file"], select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px 0; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .result { background: white; padding: 15px; border-radius: 4px; margin-top: 15px; }
+        .loading { display: none; color: #666; }
+        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .feature { background: white; padding: 15px; border-radius: 8px; text-align: center; }
+        .tabs { display: flex; margin-bottom: 20px; }
+        .tab { padding: 10px 20px; background: #ddd; cursor: pointer; border-radius: 4px 4px 0 0; margin-right: 5px; }
+        .tab.active { background: #007bff; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .checkbox-group { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .excel-preview { max-height: 200px; overflow-y: auto; background: white; padding: 10px; border-radius: 4px; }
+        .results-container { max-height: 400px; overflow-y: auto; }
+        .result-item { background: white; margin: 10px 0; padding: 15px; border-radius: 4px; border-left: 4px solid #007bff; }
+        .result-item.error { border-left-color: #dc3545; }
+        .result-item.published { border-left-color: #28a745; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 AI Content Generation System</h1>
+        <p>Automated content creation pipeline using Google Gemini AI</p>
+    </div>
+
+    <div class="features">
+        <div class="feature">
+            <h3>📊 Excel Integration</h3>
+            <p>Upload Excel files for bulk processing</p>
+        </div>
+        <div class="feature">
+            <h3>⚡ AI Generation</h3>
+            <p>Google Gemini AI content creation</p>
+        </div>
+        <div class="feature">
+            <h3>📝 WordPress Publishing</h3>
+            <p>Direct publishing to WordPress</p>
+        </div>
+        <div class="feature">
+            <h3>🎯 SEO Optimized</h3>
+            <p>Structured HTML with proper formatting</p>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('single')">Single Topic</div>
+        <div class="tab" onclick="switchTab('excel')">Excel Bulk Processing</div>
+    </div>
+
+    <!-- Single Topic Tab -->
+    <div id="single-tab" class="tab-content active">
+        <div class="demo-section">
+            <h2>Single Topic Generation</h2>
+            <div class="input-group">
+                <input type="text" id="topicInput" placeholder="Enter an article topic (e.g., 'Benefits of Solar Energy')" />
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="publishToWP" />
+                <label for="publishToWP">Publish directly to WordPress</label>
+            </div>
+            <button onclick="generateContent()">Generate Article</button>
+            <div class="loading" id="loading">Generating content...</div>
+            <div id="result" class="result" style="display: none;">
+                <h3 id="articleTitle"></h3>
+                <div id="articleContent"></div>
+                <p><strong>Word Count:</strong> <span id="wordCount"></span></p>
+                <div id="wpStatus"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Excel Tab -->
+    <div id="excel-tab" class="tab-content">
+        <div class="demo-section">
+            <h2>Excel Bulk Processing</h2>
+            <div class="input-group">
+                <label for="excelFile">Upload Excel File:</label>
+                <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="uploadExcel()" />
+            </div>
+            <div class="loading" id="uploadLoading">Uploading and processing file...</div>
+            
+            <div id="excelPreview" style="display: none;">
+                <h3>File Preview</h3>
+                <div class="input-group">
+                    <label for="columnSelect">Select Topic Column:</label>
+                    <select id="columnSelect"></select>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="bulkPublishToWP" />
+                    <label for="bulkPublishToWP">Publish all articles to WordPress</label>
+                </div>
+                <div class="excel-preview" id="previewTable"></div>
+                <button onclick="processBulkTopics()">Generate All Articles</button>
+            </div>
+            
+            <div class="loading" id="bulkLoading">Processing topics...</div>
+            <div id="bulkResults" class="results-container" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedFile = null;
+
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function generateContent() {
+            const topic = document.getElementById('topicInput').value;
+            const publishToWP = document.getElementById('publishToWP').checked;
+            
+            if (!topic) {
+                alert('Please enter a topic');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic, publish_to_wp: publishToWP })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                document.getElementById('articleTitle').textContent = data.title;
+                document.getElementById('articleContent').innerHTML = data.content;
+                document.getElementById('wordCount').textContent = data.word_count;
+                
+                const wpStatus = document.getElementById('wpStatus');
+                if (publishToWP) {
+                    wpStatus.innerHTML = data.published 
+                        ? '<div class="success">✅ Published to WordPress!</div>'
+                        : '<div class="error">❌ ' + (data.wp_message || 'Failed to publish') + '</div>';
+                } else {
+                    wpStatus.innerHTML = '';
+                }
+                
+                document.getElementById('result').style.display = 'block';
+            } catch (error) {
+                alert('Error generating content: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        async function uploadExcel() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            document.getElementById('uploadLoading').style.display = 'block';
+            document.getElementById('excelPreview').style.display = 'none';
+
+            try {
+                const response = await fetch('/upload_excel', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                uploadedFile = data.filename;
+                
+                // Populate column dropdown
+                const columnSelect = document.getElementById('columnSelect');
+                columnSelect.innerHTML = '';
+                data.columns.forEach(col => {
+                    const option = document.createElement('option');
+                    option.value = col;
+                    option.textContent = col;
+                    columnSelect.appendChild(option);
+                });
+
+                // Show preview
+                const previewTable = document.getElementById('previewTable');
+                previewTable.innerHTML = '<strong>Preview:</strong><br>' + 
+                    JSON.stringify(data.preview, null, 2).substring(0, 500) + '...';
+
+                document.getElementById('excelPreview').style.display = 'block';
+            } catch (error) {
+                alert('Error uploading file: ' + error.message);
+            } finally {
+                document.getElementById('uploadLoading').style.display = 'none';
+            }
+        }
+
+        async function processBulkTopics() {
+            const columnName = document.getElementById('columnSelect').value;
+            const publishToWP = document.getElementById('bulkPublishToWP').checked;
+            
+            if (!uploadedFile || !columnName) {
+                alert('Please upload a file and select a column');
+                return;
+            }
+
+            document.getElementById('bulkLoading').style.display = 'block';
+            document.getElementById('bulkResults').style.display = 'none';
+
+            try {
+                const response = await fetch('/process_excel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        filename: uploadedFile, 
+                        column_name: columnName,
+                        publish_to_wp: publishToWP 
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                // Display results
+                const resultsContainer = document.getElementById('bulkResults');
+                resultsContainer.innerHTML = `<h3>Processed ${data.processed} topics:</h3>`;
+                
+                data.results.forEach(result => {
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = `result-item ${result.status === 'error' ? 'error' : ''} ${result.published ? 'published' : ''}`;
+                    
+                    let statusIcon = result.status === 'success' ? '✅' : '❌';
+                    let wpIcon = result.published ? ' 📝 Published' : (publishToWP && result.wp_error ? ' ❌ WP Error' : '');
+                    
+                    resultDiv.innerHTML = `
+                        <strong>${statusIcon} ${result.topic}</strong><br>
+                        ${result.title ? `Title: ${result.title}<br>` : ''}
+                        ${result.word_count ? `Words: ${result.word_count}` : ''}
+                        ${result.error ? `Error: ${result.error}` : ''}
+                        ${wpIcon}
+                    `;
+                    resultsContainer.appendChild(resultDiv);
+                });
+                
+                document.getElementById('bulkResults').style.display = 'block';
+            } catch (error) {
+                alert('Error processing topics: ' + error.message);
+            } finally {
+                document.getElementById('bulkLoading').style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
